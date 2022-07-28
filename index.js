@@ -7,11 +7,18 @@ const express = require('express')
 const dataService = require('./services/data.service')
 
 //import jsonwebtoken
-const jwt =require('jsonwebtoken')
+const jwt = require('jsonwebtoken')
+
+//import cors
+const cors = require('cors')
 
 //server application creation using express
 const app = express()
 
+//cors use in server app
+app.use(cors({
+    origin:'http://localhost:4200'
+}))
 
 //parse JSON data
 app.use(express.json())
@@ -28,20 +35,20 @@ app.use(appMiddleware)
 
 //bank server
 
-const jwtMiddleware = (req, res,next) => {
+const jwtMiddleware = (req, res, next) => {
     try {
         //fetch token
         token = req.headers['x-access-token']
         //verify token
-        const data = jwt.verify(token,'supersecretkey12345')
+        const data = jwt.verify(token, 'supersecretkey12345')
         console.log(data);
         next()
     }
-    catch{
+    catch {
         res.status(401).json({
-            status:false,
-            statusCode:401,
-            message:"Please Log In"
+            status: false,
+            statusCode: 401,
+            message: "Please Log In"
         })
     }
 }
@@ -49,39 +56,47 @@ const jwtMiddleware = (req, res,next) => {
 
 //register API
 app.post('/register', (req, res) => {
-    //register solving
-    console.log(req.body);
-    const result = dataService.register(req.body.username, req.body.acno, req.body.password)
-    res.status(result.statusCode).json(result)
+    //register solving - asynchronous
+    dataService.register(req.body.username, req.body.acno, req.body.password)
+        .then(result => {
+            res.status(result.statusCode).json(result)
+        })
 })
 
 //login API
 app.post('/login', (req, res) => {
-    //login solving
-    const result = dataService.login(req.body.acno, req.body.pswd)
-    res.status(result.statusCode).json(result)
+    //login solving - asynchronous
+    dataService.login(req.body.acno, req.body.pswd)
+        .then(result => {
+            res.status(result.statusCode).json(result)
+        })
 })
 
 //deposit API
-app.post('/deposit',jwtMiddleware, (req, res) => {
-    //deposit solving
-    console.log(req.body);
-    const result = dataService.deposit(req.body.acno, req.body.password, req.body.amt)
-    res.status(result.statusCode).json(result)
+app.post('/deposit', jwtMiddleware, (req, res) => {
+    //deposit solving - asynchronous
+    dataService.deposit(req.body.acno, req.body.password, req.body.amt)
+        .then(result => {
+            res.status(result.statusCode).json(result)
+        })
 })
 
 //withdraw API
-app.post('/withdraw',jwtMiddleware, (req, res) => {
-    //withdraw solving
-    const result = dataService.withdraw(req.body.acno, req.body.password, req.body.amt)
-    res.status(result.statusCode).json(result)
+app.post('/withdraw', jwtMiddleware, (req, res) => {
+    //withdraw solving - asynchronous
+    dataService.withdraw(req.body.acno, req.body.password, req.body.amt)
+        .then(result => {
+            res.status(result.statusCode).json(result)
+        })
 })
 
 //transaction API
-app.post('/transaction',jwtMiddleware, (req, res) => {
-    //transaction solving
-    const result = dataService.getTransaction(req.body.acno)
-    res.status(result.statusCode).json(result)
+app.post('/transaction', jwtMiddleware, (req, res) => {
+    //transaction solving - asynchronous
+    dataService.getTransaction(req.body.acno)
+        .then(result => {
+            res.status(result.statusCode).json(result)
+        })
 })
 
 //user request resolving
