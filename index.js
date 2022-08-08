@@ -3,6 +3,9 @@
 //import express
 const express = require('express')
 
+//server application creation using express
+const app = express()
+
 
 const dataService = require('./services/data.service')
 
@@ -12,8 +15,7 @@ const jwt = require('jsonwebtoken')
 //import cors
 const cors = require('cors')
 
-//server application creation using express
-const app = express()
+
 
 //cors use in server app
 app.use(cors({
@@ -23,14 +25,14 @@ app.use(cors({
 //parse JSON data
 app.use(express.json())
 
-//application specific middleware
-const appMiddleware = (req, res, next) => {
-    console.log("Application specific middleware");
-    next()
-}
+    //application specific middleware
+    const appMiddleware = (req, res, next) => {
+        console.log("Application specific middleware");
+        next()
+    }
 
-//use middleware in app
-app.use(appMiddleware)
+    //use middleware in app
+    app.use(appMiddleware)
 
 
 //bank server
@@ -42,6 +44,7 @@ const jwtMiddleware = (req, res, next) => {
         //verify token
         const data = jwt.verify(token, 'supersecretkey12345')
         console.log(data);
+        req.currentAcno = data.currentAcno
         next()
     }
     catch {
@@ -75,7 +78,7 @@ app.post('/login', (req, res) => {
 //deposit API
 app.post('/deposit', jwtMiddleware, (req, res) => {
     //deposit solving - asynchronous
-    dataService.deposit(req.body.acno, req.body.password, req.body.amt)
+    dataService.deposit(req,req.body.acno, req.body.password, req.body.amt)
         .then(result => {
             res.status(result.statusCode).json(result)
         })
@@ -84,7 +87,7 @@ app.post('/deposit', jwtMiddleware, (req, res) => {
 //withdraw API
 app.post('/withdraw', jwtMiddleware, (req, res) => {
     //withdraw solving - asynchronous
-    dataService.withdraw(req.body.acno, req.body.password, req.body.amt)
+    dataService.withdraw(req,req.body.acno, req.body.password, req.body.amt)
         .then(result => {
             res.status(result.statusCode).json(result)
         })
@@ -97,6 +100,15 @@ app.post('/transaction', jwtMiddleware, (req, res) => {
         .then(result => {
             res.status(result.statusCode).json(result)
         })
+})
+
+//delete API
+app.delete('/deleteAcc/:acno',jwtMiddleware,(req,res) =>{
+    //delete solving - asynchronous
+    dataService.deleteAcc(req.params.acno)
+    .then(result => {
+        res.status(result.statusCode).json(result)
+    })
 })
 
 //user request resolving

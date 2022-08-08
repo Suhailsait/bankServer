@@ -81,7 +81,7 @@ const login = (acno, pswd) => {
 
 
 //deposit - asynchronous
-const deposit = (acno, password, amt) => {
+const deposit = (req,acno, password, amt) => {
 
   var amount = parseInt(amt)
 
@@ -89,6 +89,13 @@ const deposit = (acno, password, amt) => {
     acno,password
   }).then(user=>{
     if(user){
+      if(acno != req.currentAcno){
+        return {
+          status: false,
+          message: "Permission Denied",
+          statusCode: 401
+        }
+      }
       user.balance+= amount
       user.transaction.push({
         type: "CREDIT",
@@ -97,7 +104,7 @@ const deposit = (acno, password, amt) => {
       user.save()
       return {
         status: true,
-        message: amount + " deposited successfully..New balance is" + user.balance,
+        message: amount + " deposited successfully..New balance is " + user.balance,
         statusCode: 200
       }
     }
@@ -113,13 +120,20 @@ const deposit = (acno, password, amt) => {
 
 
 //withdraw - asynchronous
-const withdraw = (acno, password, amt) => {
+const withdraw = (req,acno, password, amt) => {
   var amount = parseInt(amt)
 
   return db.User.findOne({
     acno,password
   }).then(user=>{
     if(user){
+      if(acno != req.currentAcno){
+        return {
+          status: false,
+          message: "Permission Denied",
+          statusCode: 401
+        }
+      }
       if(user.balance>amount){
       user.balance-= amount
       user.transaction.push({
@@ -129,7 +143,7 @@ const withdraw = (acno, password, amt) => {
       user.save()
       return {
         status: true,
-        message: amount + " debited successfully..New balance is" + user.balance,
+        message: amount + " debited successfully..New balance is " + user.balance,
         statusCode: 200
       }
     }
@@ -178,11 +192,32 @@ const getTransaction = (acno) => {
 
 }
 
+//delete
+const deleteAcc = (acno)=>{
+  return db.User.deleteOne({
+    acno
+  }).then(user=>{
+    if(!user){
+      return {
+        status: false,
+        message: "Operation Failed!!!",
+        statusCode: 401
+      }
+    }
+    return {
+      status: true,
+      message: "Successfully Deleted",
+      statusCode: 200
+    }
+  })
+}
+
 //export
 module.exports = {
   register,
   login,
   deposit,
   withdraw,
-  getTransaction
+  getTransaction,
+  deleteAcc
 }
